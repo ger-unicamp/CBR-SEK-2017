@@ -89,21 +89,41 @@ task main(){
 
     	if(cor == colorWhite){
     		if(!ultrassonico){
-    			// if(!plaza){ // fazer função usando ultrassonico para saber se é plaza ou não
-    			estado = RETO;
-				//}else
-				// estado = PLAZA;
+    			if(!plaza){ 
+    			    estado = RETO;
+				}else{
+				    estado = PLAZA;
+                }
     		}
     		else
     			estado = CAPTURAR;
     	}else{
-    		// robô vai poucos cm a frente e faz nova leitura da cor 
-    		/* if(!rampa){
-				estado = INTESECCAO;
-    		}else{
-				// tratar caso para rampa ida e volta -> depende da sequencia de cores
-    		}
-    		*/
+            // descobrir se eh rampa na ida ou interseccao 
+    		if(cor == colorRed){
+                // robô vai poucos cm a frente e faz nova leitura da cor
+                setMotorSpeed(dir, 5);
+                setMotorSpeed(esq, 5);
+                delay(800);
+                cor = getColor(S2);
+                if(cor == colorBlue){
+                    estado = RAMPA_IDA;
+                }else{
+                    estado = INTERSECCAO;
+                }
+            }else{
+                // descobrir se eh rampa na volta ou interseccao
+                if(cor == colorGreen){
+                    setMotorSpeed(dir, 5);
+                    setMotorSpeed(esq, 5);
+                    delay(800);
+                    cor = getColor(S2);
+                    if(cor == colorBlue){
+                        estado = RAMPA_VOLTA;
+                    }else{
+                        estado = INTERSECCAO;
+                    }
+                }
+            }
     	}
 
     	switch(estado){
@@ -113,17 +133,26 @@ task main(){
     		case CAPTURAR:
     			// chamar as funções relativas a este estado
     			break;
-    		case INTESECCAO:
+    		case INTERSECCAO:
     			// chamar as funções relativas a este estado
     			break;
     		case RAMPA_IDA:
-    			// chamar as funções relativas a este estado
+                // sobe a rampa
+    			setMotorSpeed(dir, 20);
+                setMotorSpeed(esq, 20);
+                // após subir a rampa, robo estará no plaza
+                plaza = true;
     			break;
     		case PLAZA:
     			// chamar as funções relativas a este estado
     			break;
     		case RAMPA_VOLTA:
-    			// chamar as funções relativas a este estado
+                // desce a rampa
+                setMotorSpeed(dir, 20);
+                setMotorSpeed(esq, 20);
+                // após descer a rampa, robo estará no labirinto
+                plaza = false;
+                //CHAMAR FUNÇÃO PARA INVERTER AS DIREÇÕES DAS INTERSECCOES NA PILHA
     			break;	
     		default:
     			break;
