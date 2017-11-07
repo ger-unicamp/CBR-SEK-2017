@@ -13,65 +13,34 @@
 #define RAMPA_IDA		4
 #define PLAZA			5
 #define RAMPA_VOLTA		6
+#define SEM_SAIDA		7
 
 /* Outras definições */
 #define DIST_BONECO		25
-#define DIST_ANDAR 30
+#define DIST_ANDAR 27
 #define TAM 6
-#define POTENCIA 25 / 30
-#define FRENTE 1
+#define POTENCIA 20 // 30
+
+/* Definicoes de direcoes das interseccoes */
+#define DIREITA 1
+#define FRENTE 2
+#define ESQUERDA 3
+
+/* Definicoes para motores */
 #define TRAS -1
 #define ANTIHORARIO -1 //ESQUERDA
 #define HORARIO 1 //DIREITA
 #define DESLIGA 0
+#define POTENCIA_GIRO 10
 //int bonecos_total = 0;
 
-/*Funcao girar robo
-** Param: angulo, sentido
+/*Funcao andar reto
+** Param: sentido
 */
-void GirarRobo(int degree, int sentido){
-//Direita Angulo Negativo - angulo diminou se for para direita
-//Esquerda Angulo Positivo = angulo aumenta se for para esquerda
-
-	//SET GIRO
-	AndarReto(DESLIGA);
-
-	//Verificar Angulo
-	if(degree == 90){
-		degree = degree - 10;
-	}else if(degree == 180){
-		displayTextLine(1,"ANGULO 180");
-		degree = degree - 5;
-	}
-
-	if(degree == 0 && sentido == FRENTE){
-		AndarReto(FRENTE);
-	}
-
-	resetGyro(S3);
-	delay(1500);
-
-	 repeatUntil(abs(getGyroDegrees(S3)) > degree){
-	   if(sentido == HORARIO){ //Gira para direita
-		   	displayTextLine(3,"girando sentido horario");
-			  setMotorSpeed(esq, FRENTE*POTENCIA_GIRO);
-			  setMotorSpeed(dir, TRAS*POTENCIA_GIRO);
-			  //delay(2000);
-		}else{
-			displayTextLine(3,"girando sentido antihorario");
-		  setMotorSpeed(esq, TRAS*POTENCIA_GIRO);
-		  setMotorSpeed(dir, FRENTE*POTENCIA_GIRO);
-		  //delay(2000);
-		}
-	}
-
-	 //Stop the motors at the end of the turn
-	 setMotorSpeed(esq, DESLIGA);
-	 setMotorSpeed(dir, DESLIGA);
-	 delay(1500);
-	 resetGyro(S3);
-	 delay(1500);
+void AndarReto (int sentido){
+	setMotorSync(dir,esq,0,sentido*POTENCIA);
 }
+
 
 /*Funcao para andar x cm
 ** Param: distancia
@@ -84,7 +53,7 @@ void anda_x_cm (float x){
 	if (angulo >= 0){
 		setMotorReversed(dir, false);
 		setMotorReversed(esq, false);
-	} else {
+		} else {
 		setMotorReversed(esq, true);
 		setMotorReversed(dir, true);
 	}
@@ -100,58 +69,52 @@ void anda_x_cm (float x){
 
 }
 
-/*Funcao andar reto
-** Param: sentido
-*/
-void AndarReto (int sentido){
-	setMotorSync(dir,esq,0,sentido*POTENCIA);
-}
 
-/*Funcao para girar robo
-** Param: sentido do giro
+/*Funcao para andar x cm
+** Param: distancia
 */
-void GirarRobo(int degree, int sentido){
-	//Keep looping until the gyro sensor reads greater
-	//than 90 degrees (from latest reset position)
-	repeatUntil(getGyroHeading(S4) > degree){
+void GirarRobo (float x, int sentido){
+	float angulo;
 
-		if(sentido == ANTIHORARIO){
-			//Point turn to the left
-			setMotorSpeed(esq, -50);
-			setMotorSpeed(dir, 50);
+	angulo = (x*20.835);
+
+	if (angulo >= 0){
+		setMotorReversed(dir, false);
+		setMotorReversed(esq, false);
+		}else {
+		setMotorReversed(esq, true);
+		setMotorReversed(dir, true);
+	}
+
+	//GIRAR DIREITA
+	if(sentido == DIREITA){
+		moveMotorTarget(dir, angulo, -20);
+		moveMotorTarget(esq, angulo, 20);
+
+		waitUntilMotorStop(dir);
+		waitUntilMotorStop(esq);
+
+		setMotorReversed(dir, false);
+		setMotorReversed(esq, false);
+		}else{
+		if(sentido == ESQUERDA){
+			moveMotorTarget(dir, angulo, 20);
+			moveMotorTarget(esq, angulo, -20);
+
+			waitUntilMotorStop(dir);
+			waitUntilMotorStop(esq);
+
+			setMotorReversed(dir, false);
+			setMotorReversed(esq, false);
 			}else{
-			//Point turn to the right
-			setMotorSpeed(esq, 50);
-			setMotorSpeed(dir, -50);
+			AndarReto(1);
+			delay(2000);
 		}
 	}
 
-	if(sentido == FRENTE){
-		AndarReto(FRENTE);
-	}
 
-
-	//Stop the motors at the end of the turn
-	setMotorSpeed(esq, 0);
-	setMotorSpeed(dir, 0);
-	delay(100);
-	resetGyro(S4);
 }
 
-/*Funcao para pegar boneco
-** Param:
-*/
-void pega_boneco(){
-
-	GirarRobo(90,HORARIO); //giro (direita)
-	setMotorTarget (cancela, 140, 10);
-	waitUntilMotorStop (cancela);
-	anda_x_cm (DIST_ANDAR);
-	setMotorTarget (cancela, 0, 5);
-	waitUntilMotorStop (cancela);
-	anda_x_cm (DIST_ANDAR);
-	GirarRobo(90,ANTIHORARIO);//giro (esquerda);
-}
 
 /* Função para saber se existe boneco a ser recolhido ou não
 ** Params: nenhum
@@ -188,22 +151,36 @@ bool ultrassonico(){
 	}
 }
 
+/*Funcao para pegar boneco
+** Param:
+*/
+void pega_boneco(){
+	anda_x_cm (15); //teste para deixar o boneco no centro
+	GirarRobo(18,ESQUERDA); //giro (direita)
+	setMotorTarget (cancela, 120, 10);
+	waitUntilMotorStop (cancela);
+	anda_x_cm (DIST_ANDAR);
+	setMotorTarget (cancela, 0, 5);
+	waitUntilMotorStop (cancela);
+	anda_x_cm (-DIST_ANDAR);
+	GirarRobo(18,DIREITA);//giro (esquerda);
+}
 
 task main(){
-bool ult;
-resetGyro(S4);
+	bool ult;
+	//resetGyro(S4);
 
-//int estado = RETO;
-//TLegoColors cor;
+	//int estado = RETO;
+	//TLegoColors cor;
 
 
 	while(true){
 		ult = ultrassonico();
-	//	cor = getColor(S2);
+		//	cor = getColor(S2);
 
 		if(ult == true){
 			pega_boneco();
-		}else{
+			}else{
 			AndarReto(FRENTE);
 		}
 	}
