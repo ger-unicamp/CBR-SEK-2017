@@ -51,11 +51,15 @@ typedef struct dados{
 	int bonecos_direita; //bonecos esquerda = bonecos_bifurcacao - bonecos_direita
 }dados;
 
+// Topo da pilha
+int topo;
+
 /*Pilha*/
 typedef struct Pilha{
 	int max;
-	int topo;
 	dados elems[TAM];
+	//TLegoColors cor[TAM];
+	//int dir[TAM];
 }Pilha;
 
 /* Variaveis globais */
@@ -92,13 +96,13 @@ void anda_x_cm (float x){
 /*Funcao inserir
 ** Param: ponteiro para pilha, direcao e cor
 */
-bool push (Pilha p, TLegoColors cor, int dir){
-	if(p.topo == p.max){ //Pilha cheia
-		displayBigTextLine(line6,"Erro: stack overflow\n");
+bool push (Pilha *p, TLegoColors cor, int dir){
+	if(topo == p->max){ //Pilha cheia
+		//displayBigTextLine(line6,"Erro: stack overflow\n");
 		return false;
 		}else{
-		p.elems[p.topo].cor = cor;
-		p.elems[p.topo++].dir = dir;
+		p->elems[topo].cor = cor;
+		p->elems[topo++].dir = dir;
 		return true;
 	}
 }
@@ -107,10 +111,10 @@ bool push (Pilha p, TLegoColors cor, int dir){
 // Param: ponteiro para pilha
 void imprime_pilha(Pilha p){
 	int i;
-	displayBigTextLine(line1,"Imprimir Pilha:\n");
-	for(i=0;i<p.topo;i++){
-		displayBigTextLine(line1,"cor:%d",p.elems[i].cor);
-		displayBigTextLine(line2,"dir:%d",p.elems[i].dir);
+	//displayBigTextLine(line1,"Imprimir Pilha:\n");
+	for(i=0;i<topo;i++){
+		//displayBigTextLine(line1,"cor:%d",p.elems[i].cor);
+		//displayBigTextLine(line2,"dir:%d",p.elems[i].dir);
 	}
 }
 
@@ -227,7 +231,7 @@ bool checa_cor(Pilha p, TLegoColors cor){
 	int i;
 	for(i=0;i<TAM;i++){
 		if(p.elems[i].cor == cor){
-			displayBigTextLine(line1,"ndeu certo");
+			//displayBigTextLine(line1,"ndeu certo");
 			return true;
 		}
 	}
@@ -242,7 +246,7 @@ bool checa_dir(Pilha p, int dir, TLegoColors cor){
 	for(i=0;i<TAM;i++){
 		if(p.elems[i].dir == dir){
 			if(p.elems[i].cor == cor){
-				displayBigTextLine(line1,"ndeu certo"); //Cor e direcao salvo
+				//displayBigTextLine(line1,"ndeu certo"); //Cor e direcao salvo
 				return true;
 				}else{
 				return false;
@@ -260,22 +264,22 @@ void interseccao(Pilha p, TLegoColors cor){
 	int i;
 
 	if(!checa_cor(p,cor)){ //se cor for diferente de branco e nao estiver na pilha...
-		push(p,cor,DIREITA);
+		push(&p,cor,DIREITA);
 		playSound(soundLowBuzzShort);
 		//	setLEDColor(ledGreenFlash);
-		displayBigTextLine(line2,"PUSH NA PILHA");
+		//displayBigTextLine(line2,"PUSH NA PILHA");
 		GirarRobo(18, DIREITA);
 		anda_x_cm(25);
 		}else{
 		if(sem_saida == 1){
 			setLEDColor(ledRedPulse);
 			playSound(soundFastUpwardTones);
-			p.elems[p.topo].dir++;
+			p.elems[topo].dir++;
 			sem_saida = 0;
 			}else{
 			for(i=0;i<TAM;i++){
 				if(cor == p.elems[i].cor){
-					displayBigTextLine(line4,"temos cor");
+					//displayBigTextLine(line4,"temos cor");
 					setLEDColor(ledOrangeFlash);
 					GirarRobo(18,p.elems[i].dir);
 					AndarReto(1);
@@ -306,7 +310,7 @@ void interseccao(Pilha p, TLegoColors cor){
 ** Param:
 */
 void semSaida(){
-	displayBigTextLine(line1,"RUA SEM SAIDA");
+	//displayBigTextLine(line1,"RUA SEM SAIDA");
 	playSound(soundLowBuzz);
 	GirarRobo(36, HORARIO);
 	sem_saida = 1;
@@ -315,7 +319,7 @@ void semSaida(){
 
 task main(){
 
-	displayText(line1,"task main -- 1");
+	//displayText(line1,"task main -- 1");
 
 	playSound(soundException);
 
@@ -327,7 +331,7 @@ task main(){
 
 	/* inicialização necessárias */
 	p.max = TAM;
-	p.topo = 0;
+	topo = 0;
 	for(i=0;i<TAM;i++){
 		p.elems[i].cor = colorBrown; /*testar inicialziar*/
 		p.elems[i].dir = 0;
@@ -353,7 +357,7 @@ task main(){
 				delay(1000);
 				cor = getColor(S2);
 				if(cor == colorBlue || cor == colorGreen){
-					displayText(line1,"estado interseccao");
+					//displayText(line1,"estado interseccao");
 					estado = INTERSECCAO;
 				}
 				}else{
