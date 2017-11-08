@@ -3,19 +3,19 @@
 
 /*Dados sensores (Émerson)
 VERDE
-R 3 - 5
-G 10 - 15
-B 4 - 7
+R 6 - 8
+G 31 - 38
+B 11 - 12
 
 VERMELHO
-R 31 - 33
-G 5
-B 3 - 4
+R 31 - 65
+G 5 - 11
+B 3 - 6
 
 AMARELO
-R 44 - 48
-G 16 - 17
-B 3 - 4
+R 44 - 50
+G 16 - 40
+B 3 - 7
 
 BRANCO
 R 46 - 49
@@ -28,9 +28,9 @@ G 3
 B 2
 
 AZUL (RAMPA)
-R 5 - 9
-G 14 - 30
-B 15 - 34*/
+R 7 - 8
+G 16 - 16
+B 20 - 21*/
 
 /*
 ** Funcao que retorna a cor de acordo com a calibracao RGB
@@ -55,19 +55,19 @@ TLegoColors rightColor()
 			return colorWhite;
 			}else{
 			// VERDE
-			if((redValue <= 8) && (greenValue >= 10) && (blueValue <= 8)){
+			if((redValue <= 8) && (greenValue >= 30) && (blueValue <= 15)){
 				return colorGreen;
 				}else{
 				// VERMELHO MALDITO
-				if((redValue >= 15) && (greenValue <= 12) && (blueValue <= 12)){
+				if((redValue >= 30) && (greenValue <= 12) && (blueValue <= 12)){
 					return colorRed;
 					}else{
 					// AMARELO
-					if((redValue >= 30) && (greenValue >= 15) && (blueValue <= 8)){
+					if((redValue >= 30) && (greenValue >= 15) && (blueValue <= 9)){
 						return colorYellow;
 						}else{
 						// AZUL
-						if((redValue <= 10) && (greenValue >= 12) && (blueValue >= 12)){
+						if((redValue <= 10) && (greenValue >= 15) && (blueValue >= 15)){
 							return colorBlue;
 							}else{
 							// PRETO

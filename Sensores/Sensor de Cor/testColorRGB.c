@@ -3,19 +3,19 @@
 
 /*Dados sensores (Émerson)
 VERDE
-R 3 - 5
-G 10 - 15
-B 4 - 7
+R 6 - 8
+G 31 - 38
+B 11 - 12
 
 VERMELHO
-R 31 - 33
-G 5
-B 3 - 4
+R 31 - 65
+G 5 - 11
+B 3 - 6
 
 AMARELO
-R 44 - 48
-G 16 - 17
-B 3 - 4
+R 44 - 50
+G 16 - 40
+B 3 - 7
 
 BRANCO
 R 46 - 49
@@ -28,37 +28,116 @@ G 3
 B 2
 
 AZUL (RAMPA)
-R 5 - 9
-G 14 - 30
-B 15 - 34*/
+R 7 - 8
+G 16 - 16
+B 20 - 21*/
 
-task main()
+/*
+** Funcao que retorna a cor de acordo com a calibracao RGB
+** Params: nothing
+*/
+TLegoColors rightColor()
 {
 	//Creates variables to store the red, green, and blue values
 	long int redValue;
 	long int greenValue;
 	long int blueValue;
-	string response;
-	//Infinite Loop
-	while (true)
-	{
-		//Get the value of all three channels of the color sensor
-		//and store it in the variables
-		eraseDisplay();
-		delay(500);
-		getColorRGB(S2, redValue, greenValue, blueValue);
-		response = "";
-		sprintf(response, "RED: %d", redValue);
-		displayTextLine(1, response);
-		response = "";
-		sprintf(response, "GREEN: %d", greenValue);
-		displayTextLine(2, response);
-		response = "";
-		sprintf(response, "BLUE: %d", blueValue);
-		displayTextLine(3, response);
-		sleep(5000);
+
+	//Get the value of all three channels of the color sensor
+	//and store it in the variables
+	getColorRGB(S2, redValue, greenValue, blueValue);
+	// se alguma COR for detectada
+	if((redValue != 0) && (greenValue != 0) && (blueValue != 0)){
+		// BRANCO
+		if(redValue >= 40 && greenValue >= 40 && blueValue >= 30){
+
+			//Sets the sound volume of the EV3 speaker to 75
+			setSoundVolume(75);
+
+			// Starts playing a soundfile, 'Bravo.rsf' on the EV3
+			playSoundFile("Bravo");
+
+			// Gives the file 2 seconds to play
+			sleep(2000);
+			return colorWhite;
+			}else{
+			// VERDE
+			if((redValue <= 8) && (greenValue >= 30) && (blueValue <= 15)){
+
+				//Sets the sound volume of the EV3 speaker to 75
+				setSoundVolume(75);
+
+				// Starts playing a soundfile, 'Bravo.rsf' on the EV3
+				playSoundFile("Fantastic");
+
+				// Gives the file 2 seconds to play
+				sleep(2000);
+				return colorGreen;
+				}else{
+				// VERMELHO MALDITO
+				if((redValue >= 30) && (greenValue <= 12) && (blueValue <= 12)){
+
+					//Sets the sound volume of the EV3 speaker to 75
+					setSoundVolume(75);
+
+					// Starts playing a soundfile, 'Bravo.rsf' on the EV3
+					playSoundFile("Laughing 1");
+
+					// Gives the file 2 seconds to play
+					sleep(2000);
+					return colorRed;
+					}else{
+					// AMARELO
+					if((redValue >= 30) && (greenValue >= 15) && (blueValue <= 9)){
+
+						//Sets the sound volume of the EV3 speaker to 75
+						setSoundVolume(75);
+
+						// Starts playing a soundfile, 'Bravo.rsf' on the EV3
+						playSoundFile("Okay");
+
+						// Gives the file 2 seconds to play
+						sleep(2000);
+						return colorYellow;
+						}else{
+						// AZUL
+						if((redValue <= 10) && (greenValue >= 15) && (blueValue >= 15)){
+
+							//Sets the sound volume of the EV3 speaker to 75
+							setSoundVolume(75);
+
+							// Starts playing a soundfile, 'Bravo.rsf' on the EV3
+							playSoundFile("Activate");
+
+							// Gives the file 2 seconds to play
+							sleep(2000);
+							return colorBlue;
+							}else{
+							// PRETO
+							if((redValue <= 5) && (greenValue <= 5) && (blueValue <= 5)){
+
+								//Sets the sound volume of the EV3 speaker to 75
+								setSoundVolume(75);
+
+								// Starts playing a soundfile, 'Bravo.rsf' on the EV3
+								playSoundFile("Dog whine");
+
+								// Gives the file 2 seconds to play
+								sleep(2000);
+								return colorBlack;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
+	return colorNone;
 
+}
 
-
+task main(){
+	while(true){
+		rightColor();
+	}
 }
