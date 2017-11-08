@@ -17,7 +17,7 @@
 
 /* Outras definições */
 #define DIST_BONECO		25
-#define DIST_ANDAR 27
+#define DIST_ANDAR 23
 #define TAM 6
 #define POTENCIA 20 // 30
 

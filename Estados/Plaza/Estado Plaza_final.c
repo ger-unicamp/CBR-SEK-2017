@@ -107,15 +107,15 @@ largura do robô: 30 cm
 */
 void estado_plaza (){
 	while (getColor(sensor_cor) != colorBlack){			//Anda para frente com uma distância de no mínimo 50cm e máximo de 100cm de distância da parede.
-		if (getUSDistance(ultrassonico) >100){
+		if (getUSDistance(ultrassonico) >85){
 			setMotorSpeed(dir, 18);
 			setMotorSpeed(esq, 22);
-		} else if (getUSDistance(ultrassonico) < 50) {
+		} else if (getUSDistance(ultrassonico) < 65) {
 			setMotorSpeed(dir, 22);
 			setMotorSpeed(esq, 18);
 		} else {
-			setMotorSpeed(dir, 20);
-			setMotorSpeed(esq, 20);
+			setMotorSpeed(dir, 50);
+			setMotorSpeed(esq, 50);
 		}
 	}
 	//Anda 30cm, abre a cancela anda 50cm para trás, fecha a cancela e gira 180°
@@ -137,8 +137,8 @@ void estado_plaza (){
 			setMotorSpeed(dir, 22);
 			setMotorSpeed(esq, 18);
 		} else {
-			setMotorSpeed(dir, 20);
-			setMotorSpeed(esq, 20);
+			setMotorSpeed(dir, 50);
+			setMotorSpeed(esq, 50);
 		}
 	}
 }
