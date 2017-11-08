@@ -107,7 +107,7 @@ bool push (Pilha *p, TLegoColors cor, int dir){
 	}
 }
 
-//Funcao imprime
+/*Funcao imprime
 // Param: ponteiro para pilha
 void imprime_pilha(Pilha p){
 	int i;
@@ -116,7 +116,7 @@ void imprime_pilha(Pilha p){
 		//displayBigTextLine(line1,"cor:%d",p.elems[i].cor);
 		//displayBigTextLine(line2,"dir:%d",p.elems[i].dir);
 	}
-}
+}*/
 
 /*Funcao andar reto
 ** Param: sentido
@@ -184,35 +184,33 @@ TLegoColors getColor(tSensors sensor)
 	long int greenValue;
 	long int blueValue;
 
-
-
 	//Get the value of all three channels of the color sensor
 	//and store it in the variables
 	getColorRGB(sensor, redValue, greenValue, blueValue);
 	// se alguma COR for detectada
-		if((redValue != 0) && (greenValue != 0) && (blueValue != 0)){
+	if((redValue != 0) && (greenValue != 0) && (blueValue != 0)){
 		// BRANCO
 		if(redValue >= 40 && greenValue >= 40 && blueValue >= 30){
 			return colorWhite;
 			}else{
 			// VERDE
-			if((redValue <= 8) && (greenValue >= 30) && (blueValue <= 15)){
+			if((redValue <= 12) && (greenValue >= 25) && (blueValue <= 15)){
 				return colorGreen;
 				}else{
 				// VERMELHO MALDITO
-				if((redValue >= 30) && (greenValue <= 12) && (blueValue <= 12)){
+				if((redValue >= 35) && (greenValue <= 15) && (blueValue <= 12)){
 					return colorRed;
 					}else{
 					// AMARELO
-					if((redValue >= 30) && (greenValue >= 15) && (blueValue <= 9)){
+					if((redValue >= 30) && (greenValue >= 15) && (blueValue <= 10)){
 						return colorYellow;
 						}else{
 						// AZUL
-						if((redValue <= 10) && (greenValue >= 15) && (blueValue >= 15)){
+						if((redValue <= 15) && (greenValue >= 30) && (blueValue >= 30)){
 							return colorBlue;
 							}else{
 							// PRETO
-							if((redValue <= 5) && (greenValue <= 5) && (blueValue <= 5)){
+							if((redValue <= 10) && (greenValue <= 10) && (blueValue <= 10)){
 								return colorBlack;
 							}
 						}
@@ -222,7 +220,6 @@ TLegoColors getColor(tSensors sensor)
 		}
 	}
 	return colorNone;
-
 }
 
 
@@ -274,13 +271,12 @@ bool checa_cor(Pilha p, TLegoColors cor){
 
 /*Funcao para verificar se dir esta na pilha
 ** Param: ponteiro para pilha, direcao, cor
-*/
+
 bool checa_dir(Pilha p, int dir, TLegoColors cor){
 	int i;
 	for(i=0;i<TAM;i++){
 		if(p.elems[i].dir == dir){
 			if(p.elems[i].cor == cor){
-				//displayBigTextLine(line1,"ndeu certo"); //Cor e direcao salvo
 				return true;
 				}else{
 				return false;
@@ -288,12 +284,12 @@ bool checa_dir(Pilha p, int dir, TLegoColors cor){
 		}
 	}
 	return false;
-}
+}*/
 
 /*Funcao para o estado interseccao
 ** Param: ponteiro para pilha, cor
 */
-void interseccao(Pilha p, TLegoColors cor){
+void interseccao(Pilha &p, TLegoColors cor){
 
 	int i;
 
@@ -326,27 +322,12 @@ void interseccao(Pilha p, TLegoColors cor){
 		}
 		estado = RETO;
 	}
-
-	/*
-	if(!checa_cor(p,cor)){
-	push(p,cor,DIREITA);
-	for(i=0;i<TAM;i++){
-	if(cor == p.elems[i].cor){
-	displayBigTextLine(line4,"temos cor");
-	setLEDColor(ledRedFlash);
-	GirarRobo(18,p.elems[i].dir);
-	anda_x_cm(30);
-	estado = RETO;
-	}else{
-	if()
-	}*/
 }
 
 /* Funcao para o estado sem saida
 ** Param:
 */
 void semSaida(){
-	//displayBigTextLine(line1,"RUA SEM SAIDA");
 	playSound(soundLowBuzz);
 	GirarRobo(36, HORARIO);
 	sem_saida = 1;
@@ -354,16 +335,12 @@ void semSaida(){
 }
 
 task main(){
-
-	//displayText(line1,"task main -- 1");
-
 	playSound(soundException);
 
 	Pilha p;
 	int i;
 	bool ult;
 	TLegoColors cor;
-
 
 	/* inicialização necessárias */
 	p.max = TAM;
@@ -377,47 +354,45 @@ task main(){
 		ult = ultrassonico();
 		cor = getColor(S2);
 
-		if(cor == colorBlack){
-			anda_x_cm (5); // tentar tirando isso
-			cor = getColor(S2);
+		if(cor != colorNone){
 			if(cor == colorBlack){
-				AndarReto(DESLIGA);
-				delay(1000);
-				estado = SEM_SAIDA;
-			}
-			playSound(soundUpwardTones);
-			}else{
-			if(cor == colorBlue || cor == colorGreen || cor == colorRed){
-				anda_x_cm (20);
-				AndarReto(DESLIGA);
-				delay(1000);
+				anda_x_cm (5); // tentar tirando isso
 				cor = getColor(S2);
-				if(cor == colorBlue || cor == colorGreen || cor == colorRed){
-					//displayText(line1,"estado interseccao");
-					estado = INTERSECCAO;
+				if(cor == colorBlack){
+					AndarReto(DESLIGA);
+					delay(1000);
+					estado = SEM_SAIDA;
+					playSound(soundUpwardTones);
 				}
-				}else{
-				if(cor == colorWhite){
-					estado = RETO;
-				}/*else{
-				AndarReto(DESLIGA);
-				delay(10000);
-				}*/
+			}
+			else{
+				if(cor == colorYellow || cor == colorGreen || cor == colorRed){
+					anda_x_cm (20);
+					AndarReto(DESLIGA);
+					delay(1000);
+					cor = getColor(S2);
+					if(cor == colorYellow || cor == colorGreen || cor == colorRed){
+						//displayText(line1,"estado interseccao");
+						estado = INTERSECCAO;
+					}
+					}else{
+					if(cor == colorWhite){
+						estado = RETO;
+					}
+				}
+
+				switch(estado){
+				case INTERSECCAO:
+					interseccao(p,cor);
+					break;
+				case RETO:
+					AndarReto(1);
+					break;
+				case SEM_SAIDA:
+					semSaida();
+					break;
+				}
 			}
 		}
-
-		switch(estado){
-		case INTERSECCAO:
-			interseccao(p,cor);
-			//imprime_pilha(p);
-			break;
-		case RETO:
-			AndarReto(1);
-			break;
-		case SEM_SAIDA:
-			semSaida();
-			break;
-		}
-
 	}
 }
