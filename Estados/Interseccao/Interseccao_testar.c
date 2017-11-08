@@ -1,6 +1,6 @@
-#pragma config(Sensor, S1,     ult,            sensorEV3_Ultrasonic)
+#pragma config(Sensor, S1,     ultraev3,       sensorEV3_Ultrasonic)
 #pragma config(Sensor, S2,     color,          sensorEV3_Color, modeEV3Color_Color)
-#pragma config(Sensor, S3,     gyro,           sensorEV3_Gyro, modeEV3Gyro_RateAndAngle)
+#pragma config(Sensor, S3,     ultranxt,       sensorSONAR)
 #pragma config(Motor,  motorA,          dir,           tmotorNXT, PIDControl, encoder)
 #pragma config(Motor,  motorB,          esq,           tmotorNXT, PIDControl, encoder)
 #pragma config(Motor,  motorC,          cancela,       tmotorNXT, PIDControl, encoder)
@@ -11,7 +11,7 @@
 ** Código principal do robô da categoria IEEE SEK 2017
 ** Baseado em uma máquina de estados dependente de sensores ultrassônico e de cor
 ** GER - Grupo de Estudos em Robótica
-** 01/11/2017
+** 08/11/2017
 **
 */
 
@@ -25,8 +25,8 @@
 #define SEM_SAIDA		7
 
 /* Outras definições */
-#define DIST_BONECO		25
-#define DIST_ANDAR 30
+#define DIST_BONECO		30
+#define DIST_ANDAR 20
 #define TAM 6
 #define POTENCIA 20 // 30
 
@@ -37,10 +37,12 @@
 
 /* Definicoes para motores */
 #define TRAS -1
-#define ANTIHORARIO -1 //ESQUERDA
-#define HORARIO 1 //DIREITA
 #define DESLIGA 0
 #define POTENCIA_GIRO 10
+
+/* Definicoes de calibracao */
+#define CALIBRA_GIRO 3.25
+#define CALIBRA_RETO 21.7
 
 /*Informacoes*/
 typedef struct dados{
@@ -53,6 +55,7 @@ typedef struct dados{
 
 // Topo da pilha
 int topo;
+int DIST_PISO = 0;
 
 /*Pilha*/
 typedef struct Pilha{
@@ -70,20 +73,18 @@ int estado = RETO;
 ** Param: distancia
 */
 void anda_x_cm (float x){
-	float angulo;
+	float encoder;
+	int sinal;
 
-	angulo = (x*20.835);
+	encoder = (x*CALIBRA_RETO);
 
-	if (angulo >= 0){
-		setMotorReversed(dir, false);
-		setMotorReversed(esq, false);
+	if (encoder >= 0){
+		sinal = 1;
 		} else {
-		setMotorReversed(esq, true);
-		setMotorReversed(dir, true);
+		sinal = -1;
 	}
 
-	moveMotorTarget(dir, angulo, 20);
-	moveMotorTarget(esq, angulo, 20);
+	setMotorSyncEncoder(dir, esq, 0, encoder, sinal*POTENCIA);
 
 	waitUntilMotorStop(dir);
 	waitUntilMotorStop(esq);
@@ -110,12 +111,12 @@ bool push (Pilha *p, TLegoColors cor, int dir){
 /*Funcao imprime
 // Param: ponteiro para pilha
 void imprime_pilha(Pilha p){
-	int i;
-	//displayBigTextLine(line1,"Imprimir Pilha:\n");
-	for(i=0;i<topo;i++){
-		//displayBigTextLine(line1,"cor:%d",p.elems[i].cor);
-		//displayBigTextLine(line2,"dir:%d",p.elems[i].dir);
-	}
+int i;
+//displayBigTextLine(line1,"Imprimir Pilha:\n");
+for(i=0;i<topo;i++){
+//displayBigTextLine(line1,"cor:%d",p.elems[i].cor);
+//displayBigTextLine(line2,"dir:%d",p.elems[i].dir);
+}
 }*/
 
 /*Funcao andar reto
@@ -125,53 +126,43 @@ void AndarReto (int sentido){
 	setMotorSync(dir,esq,0,sentido*POTENCIA);
 }
 
+
 /*Funcao girar robo
-** Param: angulo, sentido
+** Param: angulo (em graus), sentido (DIREITA ou ESQUERDA)
 */
+void GirarRobo (float angulo, int sentido){
+	float encoder;
 
-/*Funcao para andar x cm
-** Param: distancia
-*/
-void GirarRobo (float x, int sentido){
-	float angulo;
-
-	angulo = (x*20.835);
-
-	if (angulo >= 0){
-		setMotorReversed(dir, false);
-		setMotorReversed(esq, false);
-		}else {
-		setMotorReversed(esq, true);
-		setMotorReversed(dir, true);
-	}
+	encoder = (angulo*CALIBRA_GIRO);
 
 	//GIRAR DIREITA
 	if(sentido == DIREITA){
-		moveMotorTarget(dir, angulo, -20);
-		moveMotorTarget(esq, angulo, 20);
+		setMotorSyncEncoder(dir,esq,-100,encoder,30);
 
 		waitUntilMotorStop(dir);
 		waitUntilMotorStop(esq);
 
-		setMotorReversed(dir, false);
-		setMotorReversed(esq, false);
 		}else{
 		if(sentido == ESQUERDA){
-			moveMotorTarget(dir, angulo, 20);
-			moveMotorTarget(esq, angulo, -20);
+			setMotorSyncEncoder(dir,esq,100,encoder,30);
 
 			waitUntilMotorStop(dir);
 			waitUntilMotorStop(esq);
 
-			setMotorReversed(dir, false);
-			setMotorReversed(esq, false);
-			}else{
-			AndarReto(1);
-			delay(2000);
 		}
 	}
+}
 
-
+void pega_boneco(){
+	anda_x_cm (5); //teste para deixar o boneco no centro
+	GirarRobo(90,ESQUERDA); //giro (direita)
+	setMotorTarget (cancela, 120, 10);
+	waitUntilMotorStop (cancela);
+	anda_x_cm (DIST_ANDAR);
+	setMotorTarget (cancela, 0, 5);
+	waitUntilMotorStop (cancela);
+	anda_x_cm (-DIST_ANDAR);
+	GirarRobo(90,DIREITA);//giro (esquerda);
 }
 
 /* Função para Retornar a Cor lida pelo Sensor
@@ -222,37 +213,61 @@ TLegoColors getColor(tSensors sensor)
 	return colorNone;
 }
 
-
-bool ultrassonico(){
+bool ultrassonico(tSensors sensor){
 	int vet[11];
 	int i;
 	int j;
 	int aux;
 	int k = 10;
-
-	//Lê 11 valores de distância em CM
-	for (i=0; i<11; i++){
-		vet[i] = getUSDistance(ult);
-	}
-
-	//Bubble Sort
-	for(i = 0; i < 11; i++){
-		for(j = 0; j < k; j++){
-			if(vet[j] > vet[j+1]){
-				aux = vet[j];
-				vet[j] = vet[j+1];
-				vet[j+1]=aux;
-			}
+	if(sensor == ultraev3){
+		//Lê 11 valores de distância em CM
+		for (i=0; i<11; i++){
+			vet[i] = getUSDistance(sensor);
 		}
-		k--;
-	}
 
-	//Ver se o sensor achou o boneco e retorna true ou false
-	if (vet[5] < DIST_BONECO){
-		return true;
-		}else{
-		return false;
+		//Bubble Sort
+		for(i = 0; i < 11; i++){
+			for(j = 0; j < k; j++){
+				if(vet[j] > vet[j+1]){
+					aux = vet[j];
+					vet[j] = vet[j+1];
+					vet[j+1]=aux;
+				}
+			}
+			k--;
+		}
+
+		//Ver se o sensor achou o boneco e retorna true ou false
+		if (vet[5] < DIST_BONECO){
+			return true;
+			}else{
+			return false;
+		}
 	}
+	else{
+		if(sensor == ultranxt){
+			for (i=0; i<11; i++){
+				vet[i] = SensorValue[S3];
+			}
+			//Bubble Sort
+			for(i = 0; i < 11; i++){
+				for(j = 0; j < k; j++){
+					if(vet[j] > vet[j+1]){
+						aux = vet[j];
+						vet[j] = vet[j+1];
+						vet[j+1]=aux;
+					}
+				}
+				k--;
+			}
+			if(vet[5] > DIST_PISO){
+				return true;
+			}
+			else
+				return false;
+		}
+	}
+	return false;
 }
 
 /*Funcao para verificar se cor esta na pilha
@@ -273,49 +288,68 @@ bool checa_cor(Pilha p, TLegoColors cor){
 ** Param: ponteiro para pilha, direcao, cor
 
 bool checa_dir(Pilha p, int dir, TLegoColors cor){
+int i;
+for(i=0;i<TAM;i++){
+if(p.elems[i].dir == dir){
+if(p.elems[i].cor == cor){
+return true;
+}else{
+return false;
+}
+}
+}
+return false;
+}*/
+
+bool increment_dir(Pilha *p, TLegoColors cor){
 	int i;
 	for(i=0;i<TAM;i++){
-		if(p.elems[i].dir == dir){
-			if(p.elems[i].cor == cor){
-				return true;
-				}else{
-				return false;
-			}
+		if(cor == p->elems[i].cor){
+			p->elems[i].dir++;
+			return true;
 		}
 	}
 	return false;
-}*/
-
+}
 /*Funcao para o estado interseccao
 ** Param: ponteiro para pilha, cor
 */
 void interseccao(Pilha &p, TLegoColors cor){
 
 	int i;
-
+	int direcao;
 	if(!checa_cor(p,cor)){ //se cor for diferente de branco e nao estiver na pilha...
-		push(&p,cor,DIREITA);
+		push(p,cor,DIREITA);
 		playSound(soundLowBuzzShort);
 		//	setLEDColor(ledGreenFlash);
 		//displayBigTextLine(line2,"PUSH NA PILHA");
-		GirarRobo(18, DIREITA);
+		GirarRobo(90, DIREITA);
 		anda_x_cm(25);
 		}else{
 		if(sem_saida == 1){
 			setLEDColor(ledRedPulse);
 			playSound(soundFastUpwardTones);
-			GirarRobo(18,DIREITA);
-			anda_x_cm(15);
-			p.elems[topo].dir++;
+			GirarRobo(90,DIREITA);
+			anda_x_cm(25);
+			increment_dir(p, cor);
 			sem_saida = 0;
 			}else{
 			for(i=0;i<TAM;i++){
 				if(cor == p.elems[i].cor){
 					//displayBigTextLine(line4,"temos cor");
+					direcao = p.elems[i].dir;
+					if(direcao == DIREITA)
+					{
+						GirarRobo(90, DIREITA);
+					}
+					else{
+						if(direcao == ESQUERDA)
+						{
+							GirarRobo(90, ESQUERDA);
+						}
+					}
 					setLEDColor(ledOrangeFlash);
-					GirarRobo(18,p.elems[i].dir);
-					AndarReto(1);
-					delay(3000);
+					anda_x_cm(30);
 
 				}
 			}
@@ -329,8 +363,9 @@ void interseccao(Pilha &p, TLegoColors cor){
 */
 void semSaida(){
 	playSound(soundLowBuzz);
-	GirarRobo(36, HORARIO);
+	GirarRobo(180, ESQUERDA);
 	sem_saida = 1;
+	anda_x_cm(30);
 	estado = RETO;
 }
 
@@ -338,8 +373,8 @@ task main(){
 	playSound(soundException);
 
 	Pilha p;
-	int i;
-	bool ult;
+	int i, aux;
+	bool ultev3, ultnxt;
 	TLegoColors cor;
 
 	/* inicialização necessárias */
@@ -349,50 +384,81 @@ task main(){
 		p.elems[i].cor = colorBrown; /*testar inicialziar*/
 		p.elems[i].dir = 0;
 	}
+	for(i=0; i < 10; i++){
+		aux = SensorValue[S3];
+		if(aux > DIST_PISO)
+			DIST_PISO = aux;
+	}
 
 	while(true){
-		ult = ultrassonico();
+
 		cor = getColor(S2);
 
 		if(cor != colorNone){
 			if(cor == colorBlack){
-				anda_x_cm (5); // tentar tirando isso
+				AndarReto(DESLIGA);
+				delay(1000);
 				cor = getColor(S2);
+
 				if(cor == colorBlack){
-					AndarReto(DESLIGA);
+					AndarReto(TRAS);
 					delay(1000);
+					AndarReto(DESLIGA);
 					estado = SEM_SAIDA;
-					playSound(soundUpwardTones);
+					playSoundFile("Dog whine");
 				}
 			}
 			else{
-				if(cor == colorYellow || cor == colorGreen || cor == colorRed){
-					anda_x_cm (20);
-					AndarReto(DESLIGA);
-					delay(1000);
-					cor = getColor(S2);
+				ultnxt = ultrassonico(ultranxt);
+				if(!ultnxt){
 					if(cor == colorYellow || cor == colorGreen || cor == colorRed){
-						//displayText(line1,"estado interseccao");
-						estado = INTERSECCAO;
+						anda_x_cm(8);
+						AndarReto(DESLIGA);
+						delay(1000);
+						cor = getColor(S2);
+						if(cor == colorYellow || cor == colorGreen || cor == colorRed){
+							//displayText(line1,"estado interseccao");
+							estado = INTERSECCAO;
+						}
 					}
-					}else{
-					if(cor == colorWhite){
-						estado = RETO;
+					else{
+						if(cor == colorWhite){
+							estado = RETO;
+							ultev3 = ultrassonico(ultraev3);
+							if(ultev3){
+								estado = CAPTURAR;
+							}
+						}
 					}
 				}
-
-				switch(estado){
-				case INTERSECCAO:
-					interseccao(p,cor);
-					break;
-				case RETO:
-					AndarReto(1);
-					break;
-				case SEM_SAIDA:
-					semSaida();
-					break;
+				else{
+					while(ultrassonico(ultranxt)){
+						AndarReto(DESLIGA);
+						AndarReto(TRAS);
+						delay(500);
+						GirarRobo(10, ESQUERDA);
+						GirarRobo(6, DIREITA);
+						delay(1000);
+					}
 				}
 			}
+			switch(estado){
+			case INTERSECCAO:
+				interseccao(p,cor);
+				break;
+			case RETO:
+				AndarReto(1);
+				break;
+			case SEM_SAIDA:
+				semSaida();
+				break;
+			case CAPTURAR:
+				pega_boneco();
+				break;
+			}
+
+
 		}
+
 	}
 }
