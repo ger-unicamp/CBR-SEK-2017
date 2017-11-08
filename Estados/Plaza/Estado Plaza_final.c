@@ -174,25 +174,35 @@ void estado_plaza (){
 	anda_x_cm (-60);
 	setMotorTarget (cancela, 0, 10);
 	waitUntilMotorStop (cancela);
+	delay(1000);
 	sensor_esq = getUSDistance(S1);
-	GirarRobo(180,ESQUERDA);
+	GirarRobo(180,DIREITA);
+	delay(1000);
 	sensor_dir = getUSDistance(S1);
 	diferenca = (sensor_esq - sensor_dir);
 	while (diferenca > 1 || diferenca < -1){
 		if (diferenca > 1){
 			GirarRobo(90, DIREITA);
-			anda_x_cm(0.5);
+			delay(100);
+			anda_x_cm(1);
+			delay(100);
 			GirarRobo(90, DIREITA);
+			delay(1000);
 			sensor_esq = getUSDistance(S1);
 			GirarRobo(180,ESQUERDA);
+			delay(1000);
 			sensor_dir = getUSDistance(S1);
 			diferenca = (sensor_esq - sensor_dir);
 			} else {
 			GirarRobo(90, ESQUERDA);
-			anda_x_cm(0.5);
+			delay(100);
+			anda_x_cm(1.5);
+			delay(100);
 			GirarRobo(90, ESQUERDA);
+			delay(1000);
 			sensor_esq = getUSDistance(S1);
 			GirarRobo(180,ESQUERDA);
+			delay(1000);
 			sensor_dir = getUSDistance(S1);
 			diferenca = (sensor_esq - sensor_dir);
 		}
@@ -209,7 +219,7 @@ void estado_plaza (){
 		AndarReto(1);
 		}
 		}*/
-
+		anda_x_cm(50);
 		setMotorSpeed(dir,0);
 		setMotorSpeed(esq,0);
 
