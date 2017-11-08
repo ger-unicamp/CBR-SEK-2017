@@ -13,8 +13,8 @@
 ** Param: sentido
 */
 void AndarReto (int sentido){
-	displayText(line1,"andar para frente");
-//	setMotorSync(dir,esq,0,sentido*POTENCIA);
+	//displayText(line1,"andar para frente");
+	setMotorSync(dir,esq,0,sentido*POTENCIA);
 }
 
 /*Funcao para girar robo
@@ -25,20 +25,20 @@ int GirarRobo(int degree, int sentido){
  //Keep looping until the gyro sensor reads greater
  //than 90 degrees (from latest reset position)
 
-    displayText(line1,"girar robo");
+/*    displayText(line1,"girar robo");
     displaySensorValues(line1,S4);
     displayVariableValues(line2,degree);
     displayText(line5,"sentido");
-
+*/
     if(FRENTE){
-        displayText(line4,"FRENTE");
+  //      displayText(line4,"FRENTE");
         AndarReto(FRENTE);
     }
 
      repeatUntil(getGyroHeading(S4) > degree ){
 
          if(sentido == ANTIHORARIO){
-           displayText(line3,"ANTIHORARIO");
+    //       displayText(line3,"ANTIHORARIO");
            //Point turn to the left
            // setMotorSpeed(esq, -50);
            // setMotorSpeed(dir, 50);
@@ -83,5 +83,3 @@ int sentido;
 	}
 
 }
-
-
