@@ -1,4 +1,4 @@
-# SEK 2017 - GER (Grupo de Estudos em Robótica)
+﻿# SEK 2017 - GER (Grupo de Estudos em Robótica)
 
 Código do Projeto SEK para o desafio 2017/2018 da Competição Brasileira de Robótica.
 
@@ -45,6 +45,7 @@ Estados:
 * Rampa Ida
 * Plaza
 * Rampa Volta
+* Sem saída
 
 Sensores:
 
