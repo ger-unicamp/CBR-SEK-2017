@@ -92,7 +92,15 @@ void anda_x_cm (float x){
 ** Params: nothing
 */
 void rampa(){
-	setMotorSync(dir,esq,0,30);
+	while(ultrassonico(ultranxt)){
+						AndarReto(DESLIGA);
+						AndarReto(TRAS);
+						delay(500);
+						GirarRobo(10, ESQUERDA);
+						GirarRobo(6, DIREITA);
+						delay(1000);
+	}
+	anda_x_cm(10);
 }
 
 /*Funcao inserir
@@ -154,20 +162,19 @@ void GirarRobo (float angulo, int sentido){
 	}
 }
 
-
 /* Funcao do estado captura bonecos
 ** Params: nothing
 */
 void pega_boneco(){
-	anda_x_cm (5); //teste para deixar o boneco no centro
-	GirarRobo(90,ESQUERDA); //giro (direita)
-	setMotorTarget (cancela, 120, 10); // abre cancela
+	anda_x_cm (-23); //teste para deixar o boneco no centro
+	setMotorTarget (cancela, 190, 8); // abre cancela
 	waitUntilMotorStop (cancela);
-	anda_x_cm (DIST_ANDAR); // anda para pegar boneco
-	setMotorTarget (cancela, 0, 5);
+	anda_x_cm (26); // anda para pegar boneco
+	delay(500);
+	anda_x_cm (-3);
+	setMotorTarget (cancela, 0, 15);
 	waitUntilMotorStop (cancela);
-	anda_x_cm (-DIST_ANDAR);
-	GirarRobo(90,DIREITA);//giro (esquerda);
+	delay(2000);
 }
 
 /* Função para Retornar a Cor lida pelo Sensor
@@ -186,15 +193,15 @@ TLegoColors getColor(tSensors sensor)
 	// se alguma COR for detectada
 	if((redValue != 0) && (greenValue != 0) && (blueValue != 0)){
 		// BRANCO
-		if(redValue >= 40 && greenValue >= 40 && blueValue >= 30){
+		if(redValue >= 30 && greenValue >= 30 && blueValue >= 20){
 			return colorWhite;
 			}else{
 			// VERDE
-			if((redValue <= 12) && (greenValue >= 25) && (blueValue <= 15)){
+			if((redValue <= 10) && (greenValue >= 10) && (blueValue <= 12)){
 				return colorGreen;
 				}else{
 				// VERMELHO MALDITO
-				if((redValue >= 35) && (greenValue <= 15) && (blueValue <= 12)){
+				if((redValue >= 30) && (greenValue <= 10) && (blueValue <= 12)){
 					return colorRed;
 					}else{
 					// AMARELO
@@ -202,7 +209,7 @@ TLegoColors getColor(tSensors sensor)
 						return colorYellow;
 						}else{
 						// AZUL
-						if((redValue <= 15) && (greenValue >= 30) && (blueValue >= 30)){
+						if((redValue <= 15) && (greenValue >= 15) && (blueValue >= 15)){
 							return colorBlue;
 							}else{
 							// PRETO
@@ -494,7 +501,7 @@ task main(){
 	playSound(soundException);
 
 	Pilha p;
-	int i, aux;
+	int i, aux, nBonecos = 0;
 	bool ultev3, ultnxt;
 	TLegoColors cor, cor_aux;
 
@@ -565,11 +572,13 @@ task main(){
 						if(cor == colorWhite){
 							if(plaza == false){
 								estado = RETO;
+								if(nBonecos == 0){
 								// veja se ha bonecos nos postos ao lado do robo
 								ultev3 = ultrassonico(ultraev3);
 								if(ultev3){
 									estado = CAPTURAR;
 								}
+							}
 							}
 							else{
 								// se passou pela rampa, o estado sera plaza
@@ -603,6 +612,7 @@ task main(){
 			break;
 		case CAPTURAR:
 			pega_boneco();
+			nBonecos++;
 			// se estiver contrario ao plaza
 			if(volta == true){
 				//gira o robo 180º
@@ -625,7 +635,7 @@ task main(){
 			plaza = false;
 			// sai do plaza, volta para as ruas
 			volta = true;
-
+			nBonecos = 0;
 			// corrige trajetoria se robo estiver torto
 			while(ultrassonico(ultranxt)){
 				AndarReto(DESLIGA);

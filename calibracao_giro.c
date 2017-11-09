@@ -31,7 +31,7 @@
 #define POTENCIA_GIRO 10
 
 /* Definicoes de calibracao */
-#define CALIBRA_GIRO 3.227
+#define CALIBRA_GIRO 3.25
 #define CALIBRA_RETO 21.7
 
 
