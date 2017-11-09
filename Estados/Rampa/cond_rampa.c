@@ -158,6 +158,10 @@ void GirarRobo (float angulo, int sentido){
 	}
 }
 
+
+/* Funcao do estado captura bonecos
+** Params: nothing
+*/
 void pega_boneco(){
 	anda_x_cm (5); //teste para deixar o boneco no centro
 	GirarRobo(90,ESQUERDA); //giro (direita)
@@ -306,6 +310,26 @@ return false;
 return false;
 }*/
 
+/*Funcao troca sentido
+** Param: ponteiro para pilha
+*/
+void troca(Pilha *p){
+int i;
+
+	for(i=0;i<p->topo;i++){
+		if(p->elems[i].dir == FRENTE){
+			p->elems[i].dir = TRAS;
+		}else if(p->elems[i].dir == ESQUERDA){
+			p->elems[i].dir = DIREITA;
+		}else if(p->elems[i].dir == DIREITA){
+			p->elems[i].dir = ESQUERDA;
+		}
+	}
+}
+
+/*
+** Funcao para mudar direcao da cor na pilha
+*/
 bool increment_dir(Pilha *p, TLegoColors cor){
 	int i;
 	for(i=0;i<TAM;i++){
@@ -316,6 +340,8 @@ bool increment_dir(Pilha *p, TLegoColors cor){
 	}
 	return false;
 }
+
+
 /*Funcao para o estado interseccao
 ** Param: ponteiro para pilha, cor
 */
@@ -363,6 +389,84 @@ void interseccao(Pilha &p, TLegoColors cor){
 		}
 		estado = RETO;
 	}
+}
+
+//Estado Plaza
+/*
+Algorítmo:
+1.Andar reto mantendo 77,5 cm* de distância entre as paredes enquanto cor (branco)
+2.Quando cor for preto, usando os dados do encoder dos motores, andar por mais 30 cm (centro do círculo preto).
+3.Para e levanta a cancela para depositar os bonecos.
+4.Anda para trás por uma distância suficiente para sair do círculo preto e gira 180°.
+5.Andar reto mantendo 77,5 cm de distância entre as paredes.
+6.Ao dectetar faixas de cores mudar de estado
+*comprimento do módulo: 185 cm
+largura do robô: 30 cm
+185-30 = 155 / 2 = 77,5
+*/
+void estado_plaza(){
+
+	float sensor_esq;
+	float sensor_dir;
+	float diferenca;
+
+	while (getColor(color) != colorBlack){			//Anda para frente com uma distância de no mínimo 50cm e máximo de 100cm de distância da parede.
+		if (getUSDistance(ultraev3) >85){
+			setMotorSpeed(dir, 18);
+			setMotorSpeed(esq, 22);
+			} else if (getUSDistance(ultraev3) < 65) {
+			setMotorSpeed(dir, 22);
+			setMotorSpeed(esq, 18);
+			} else {
+			AndarReto (1);
+		}
+	}
+	//Anda pra frente, abre a cancela anda para trás, fecha a cancela e gira 180°
+	anda_x_cm (15);
+	setMotorTarget (cancela, 120, 30);
+	waitUntilMotorStop (cancela);
+	anda_x_cm (-60);
+	setMotorTarget (cancela, 0, 10);
+	waitUntilMotorStop (cancela);
+	sensor_esq = getUSDistance(S1);
+	GirarRobo(180,ESQUERDA);
+	sensor_dir = getUSDistance(S1);
+	diferenca = (sensor_esq - sensor_dir);
+	while (diferenca > 1 || diferenca < -1){
+		if (diferenca > 1){
+			GirarRobo(90, DIREITA);
+			anda_x_cm(0.5);
+			GirarRobo(90, DIREITA);
+			sensor_esq = getUSDistance(S1);
+			GirarRobo(180,ESQUERDA);
+			sensor_dir = getUSDistance(S1);
+			diferenca = (sensor_esq - sensor_dir);
+			} else {
+			GirarRobo(90, ESQUERDA);
+			anda_x_cm(0.5);
+			GirarRobo(90, ESQUERDA);
+			sensor_esq = getUSDistance(S1);
+			GirarRobo(180,ESQUERDA);
+			sensor_dir = getUSDistance(S1);
+			diferenca = (sensor_esq - sensor_dir);
+		}
+	}
+
+	/*	while (getColor(sensor_cor) != colorGreen){		//Volta para a rampa, tentando manter a distância minima de 50cm e máxima de 100cm da parede
+	if (getUSDistance(ultrassonico) >100){
+	setMotorSpeed(dir, 18);
+	setMotorSpeed(esq, 22);
+	} else if (getUSDistance(ultrassonico) < 50) {
+	setMotorSpeed(dir, 22);
+	setMotorSpeed(esq, 18);
+	} else {
+	AndarReto(1);
+	}
+	}*/
+
+	setMotorSpeed(dir,0);
+	setMotorSpeed(esq,0);
+
 }
 
 /* Funcao para o estado sem saida
@@ -423,15 +527,15 @@ task main(){
 						AndarReto(DESLIGA);
 						delay(500);
 						cor_aux = getColor(S2);
-						if(cor_aux == cor){
-							//displayText(line1,"estado interseccao");
-							if(interseccoes == 4){
-								estado = RAMPA;
-							}
-							else{
+						if(interseccoes == 4){
+							estado = RAMPA;
+						}
+						else{
+							if(cor_aux == cor){
+								//displayText(line1,"estado interseccao")
 								estado = INTERSECCAO;
-							}
 
+							}
 						}
 					}
 					else{
@@ -442,7 +546,8 @@ task main(){
 								if(ultev3){
 									estado = CAPTURAR;
 								}
-								}else{
+							}
+							else{
 								estado = PLAZA;
 							}
 						}
@@ -479,6 +584,8 @@ task main(){
 			break;
 		case PLAZA:
 			interseccoes = 0;
+			estado_plaza();
+			plaza = false;
 			break;
 		}
 	}
