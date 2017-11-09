@@ -11,7 +11,7 @@
 ** Código principal do robô da categoria IEEE SEK 2017
 ** Baseado em uma máquina de estados dependente de sensores ultrassônico e de cor
 ** GER - Grupo de Estudos em Robótica
-** 08/11/2017
+** 09/11/2017
 **
 */
 
@@ -47,27 +47,22 @@
 typedef struct dados{
 	TLegoColors cor;
 	int dir;
-	/*int bonecos_total; // numero de bonecos total na pista
-	int bonecos_bifurcacao; //total de bonecos presentes na bifurcacao (esquerda + direita)
-	int bonecos_direita; //bonecos esquerda = bonecos_bifurcacao - bonecos_direita*/
 }dados;
 
 // Topo da pilha
 int topo, interseccoes = 0;
 int DIST_PISO = 0;
 
-
 /*Pilha*/
 typedef struct Pilha{
 	int max;
 	dados elems[TAM];
-	//TLegoColors cor[TAM];
-	//int dir[TAM];
 }Pilha;
 
 /* Variaveis globais */
 int sem_saida = 0;
 int estado = RETO;
+bool plaza = false, volta = false;
 
 /*Funcao para andar x cm
 ** Param: distancia
@@ -166,9 +161,9 @@ void GirarRobo (float angulo, int sentido){
 void pega_boneco(){
 	anda_x_cm (5); //teste para deixar o boneco no centro
 	GirarRobo(90,ESQUERDA); //giro (direita)
-	setMotorTarget (cancela, 120, 10);
+	setMotorTarget (cancela, 120, 10); // abre cancela
 	waitUntilMotorStop (cancela);
-	anda_x_cm (DIST_ANDAR);
+	anda_x_cm (DIST_ANDAR); // anda para pegar boneco
 	setMotorTarget (cancela, 0, 5);
 	waitUntilMotorStop (cancela);
 	anda_x_cm (-DIST_ANDAR);
@@ -220,15 +215,22 @@ TLegoColors getColor(tSensors sensor)
 			}
 		}
 	}
+	// nenhuma cor lida
 	return colorNone;
 }
 
+/*
+** Funcao para uso do sensor ultrassonico
+** Params: sensor usado (do ev3 ou nxt, nesse caso)
+*/
 bool ultrassonico(tSensors sensor){
 	int vet[11];
 	int i;
 	int j;
 	int aux;
 	int k = 10;
+
+	// caso a leitura seja do sensor do ev3 (para detectar bonecos)
 	if(sensor == ultraev3){
 		//Lê 11 valores de distância em CM
 		for (i=0; i<11; i++){
@@ -255,6 +257,7 @@ bool ultrassonico(tSensors sensor){
 		}
 	}
 	else{
+		// se for para ler sensor do nxt
 		if(sensor == ultranxt){
 			for (i=0; i<11; i++){
 				vet[i] = SensorValue[S3];
@@ -287,7 +290,6 @@ bool checa_cor(Pilha p, TLegoColors cor){
 	int i;
 	for(i=0;i<TAM;i++){
 		if(p.elems[i].cor == cor){
-			//displayBigTextLine(line1,"ndeu certo");
 			return true;
 		}
 	}
@@ -311,16 +313,14 @@ return false;
 return false;
 }*/
 
-/*Funcao troca sentido
+/*Funcao troca sentido das direcoes da pilha
 ** Param: ponteiro para pilha
 */
 void troca(Pilha *p){
 	int i;
 
-	for(i=0;i<p->topo;i++){
-		if(p->elems[i].dir == FRENTE){
-			p->elems[i].dir = TRAS;
-			}else if(p->elems[i].dir == ESQUERDA){
+	for(i=0; i<topo; i++){
+		if(p->elems[i].dir == ESQUERDA){
 			p->elems[i].dir = DIREITA;
 			}else if(p->elems[i].dir == DIREITA){
 			p->elems[i].dir = ESQUERDA;
@@ -330,6 +330,7 @@ void troca(Pilha *p){
 
 /*
 ** Funcao para mudar direcao da cor na pilha
+** Params: pilha e cor lida pelo sensor
 */
 bool increment_dir(Pilha *p, TLegoColors cor){
 	int i;
@@ -342,7 +343,6 @@ bool increment_dir(Pilha *p, TLegoColors cor){
 	return false;
 }
 
-
 /*Funcao para o estado interseccao
 ** Param: ponteiro para pilha, cor
 */
@@ -351,12 +351,15 @@ void interseccao(Pilha &p, TLegoColors cor){
 	int i;
 	int direcao;
 	if(!checa_cor(p,cor)){ //se cor for diferente de branco e nao estiver na pilha...
+		// coloca na pilha
 		push(p,cor,DIREITA);
 		playSound(soundLowBuzzShort);
 		//	setLEDColor(ledGreenFlash);
 		//displayBigTextLine(line2,"PUSH NA PILHA");
+		// primeira tentativa sempre vai para a direita
 		GirarRobo(90, DIREITA);
 		anda_x_cm(25);
+		// indica que passou por uma interseccao
 		interseccoes++;
 		}else{
 		if(sem_saida == 1){
@@ -364,14 +367,20 @@ void interseccao(Pilha &p, TLegoColors cor){
 			playSound(soundFastUpwardTones);
 			GirarRobo(90,DIREITA);
 			anda_x_cm(25);
+			// muda direcao anterior na pilha, pois robo encontrou rua sem saida
 			increment_dir(p, cor);
 			sem_saida = 0;
-			}else{
+		}
+		else{
 			for(i=0;i<TAM;i++){
+				// se tiver cor na pilha
 				if(cor == p.elems[i].cor){
 					//displayBigTextLine(line4,"temos cor");
 					direcao = p.elems[i].dir;
+					// passou pela primeira vez por outra interseccao
 					interseccoes++;
+
+					// vira de acordo com a direcao na pilha
 					if(direcao == DIREITA)
 					{
 						GirarRobo(90, DIREITA);
@@ -384,7 +393,6 @@ void interseccao(Pilha &p, TLegoColors cor){
 					}
 					setLEDColor(ledOrangeFlash);
 					anda_x_cm(30);
-
 				}
 			}
 		}
@@ -411,11 +419,11 @@ void estado_plaza (){
 	float sensor_dir;
 	float diferenca;
 
-	while (getColor(sensor_cor) != colorBlack){			//Anda para frente com uma distância de no mínimo 50cm e máximo de 100cm de distância da parede.
-		if (getUSDistance(ultrassonico) >85){
+	while (getColor(color) != colorBlack){			//Anda para frente com uma distância de no mínimo 50cm e máximo de 100cm de distância da parede.
+		if (getUSDistance(ultraev3) > 85){
 			setMotorSpeed(dir, 18);
 			setMotorSpeed(esq, 22);
-			} else if (getUSDistance(ultrassonico) < 65) {
+			} else if (getUSDistance(ultraev3) < 65) {
 			setMotorSpeed(dir, 22);
 			setMotorSpeed(esq, 18);
 			} else {
@@ -435,6 +443,8 @@ void estado_plaza (){
 	delay(1000);
 	sensor_dir = getUSDistance(S1);
 	diferenca = (sensor_esq - sensor_dir);
+
+	// atraves do ultrassonico ajusta o robo para sair corretamente do plaza
 	while (diferenca > 1 || diferenca < -1){
 		if (diferenca > 1){
 			GirarRobo(90, DIREITA);
@@ -469,10 +479,11 @@ void estado_plaza (){
 }
 
 /* Funcao para o estado sem saida
-** Param:
+** Param: nothing
 */
 void semSaida(){
 	playSound(soundLowBuzz);
+	// gira o robo
 	GirarRobo(180, ESQUERDA);
 	sem_saida = 1;
 	anda_x_cm(30);
@@ -484,7 +495,7 @@ task main(){
 
 	Pilha p;
 	int i, aux;
-	bool ultev3, ultnxt, plaza = false, volta = false;
+	bool ultev3, ultnxt;
 	TLegoColors cor, cor_aux;
 
 	/* inicialização necessárias */
@@ -494,6 +505,8 @@ task main(){
 		p.elems[i].cor = colorBrown; /*testar inicialziar*/
 		p.elems[i].dir = 0;
 	}
+
+	// calibra a distancia do robo da superficie de contato
 	for(i=0; i < 10; i++){
 		aux = SensorValue[S3];
 		if(aux > DIST_PISO)
@@ -501,7 +514,7 @@ task main(){
 	}
 
 	while(true){
-
+		setLEDColor(ledRedPulse);
 		cor = getColor(S2);
 
 		if(cor != colorNone){
@@ -509,8 +522,8 @@ task main(){
 				AndarReto(DESLIGA);
 				delay(1000);
 				cor = getColor(S2);
-
-				if(cor == colorBlack){
+				// se a cor for preta é sem saida
+				if(cor == colorBlack && plaza == false){
 					AndarReto(TRAS);
 					delay(1000);
 					AndarReto(DESLIGA);
@@ -519,21 +532,32 @@ task main(){
 				}
 			}
 			else{
+				// le a distancia da superficie
 				ultnxt = ultrassonico(ultranxt);
 				if(!ultnxt){
+					// se robo nao estiver saindo da rota, ve se eh interseccao
 					if(cor == colorYellow || cor == colorGreen || cor == colorRed){
 						anda_x_cm(3);
 						AndarReto(DESLIGA);
 						delay(500);
 						cor_aux = getColor(S2);
-						if(interseccoes == 4){
-							estado = RAMPA;
-						}
-						else{
-							if(cor_aux == cor){
-								//displayText(line1,"estado interseccao")
-								estado = INTERSECCAO;
-
+						if(cor_aux == cor){
+							// apos quatro interseccoes é certeza que a prox cor vermelha sera rampa
+							if(interseccoes == 4){
+								if(volta == false){
+									estado = RAMPA;
+								}
+								else{
+									GirarRobo(180, ESQUERDA);
+									troca(p);
+									volta = false;
+								}
+							}
+							else{
+								if(cor_aux == cor){
+									//displayText(line1,"estado interseccao")
+									estado = INTERSECCAO;
+								}
 							}
 						}
 					}
@@ -541,18 +565,21 @@ task main(){
 						if(cor == colorWhite){
 							if(plaza == false){
 								estado = RETO;
+								// veja se ha bonecos nos postos ao lado do robo
 								ultev3 = ultrassonico(ultraev3);
 								if(ultev3){
 									estado = CAPTURAR;
 								}
 							}
 							else{
+								// se passou pela rampa, o estado sera plaza
 								estado = PLAZA;
 							}
 						}
 					}
 				}
 				else{
+					// se robo estiver torto, saindo da rua, corrige a direcao com ultrassonico a direita
 					while(ultrassonico(ultranxt)){
 						AndarReto(DESLIGA);
 						AndarReto(TRAS);
@@ -585,16 +612,38 @@ task main(){
 			}
 			break;
 		case RAMPA:
+			// sobe a rampa
 			rampa();
 			plaza = true;
 			break;
 		case PLAZA:
 			interseccoes = 0;
+			// deixa bonecos no plaza
 			estado_plaza();
+			// troca direcoes na pilha
 			troca(p);
 			plaza = false;
+			// sai do plaza, volta para as ruas
 			volta = true;
-			anda_x_cm(10);
+
+			// corrige trajetoria se robo estiver torto
+			while(ultrassonico(ultranxt)){
+				AndarReto(DESLIGA);
+				AndarReto(TRAS);
+				delay(500);
+				GirarRobo(10, ESQUERDA);
+				GirarRobo(6, DIREITA);
+				delay(1000);
+			}
+			anda_x_cm(5);
+			while(ultrassonico(ultranxt)){
+				AndarReto(DESLIGA);
+				AndarReto(TRAS);
+				delay(500);
+				GirarRobo(10, ESQUERDA);
+				GirarRobo(6, DIREITA);
+				delay(1000);
+			}
 			break;
 		}
 	}
