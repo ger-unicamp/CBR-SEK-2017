@@ -33,7 +33,7 @@
 /* Definicoes de direcoes das interseccoes */
 #define DIREITA 1
 #define FRENTE 2
-#define ESQUERDA 3
+#define ESQUERDA  3
 
 /* Definicoes para motores */
 #define TRAS -1
